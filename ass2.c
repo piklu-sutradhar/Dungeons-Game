@@ -12,6 +12,7 @@
 #include<stdlib.h>
 #include<ctype.h>
 #include<string.h>
+#include<math.h>
 
 #define LINE_LENGTH 50
 //-------------------------------------------------------------------------------------
@@ -39,7 +40,7 @@ typedef struct game
 //-------------------------------------------------------------------------------------
 // FUNCTIONS
 //-------------------------------------------------------------------------------------
-void print(GAME *game1);
+void print(GAME *game1,int r,int c);
 int main( int argc, char *argv )
 {
     GAME game1;
@@ -54,18 +55,43 @@ int main( int argc, char *argv )
             fgets(game1.title,LINE_LENGTH,file);
             //printf("%s", game1.title);
             fscanf(file, "%d %d %d", &game1.rows, &game1.columns, &game1.moves);
+            fgetc(file);
             //printf("%d %d %d",game1.rows, game1.columns, game1.moves);
             char command[100];
+            int r=0, c=0;
             for(i=0;i<game1.rows;i++){
                 for(j=0;j<game1.columns;j++){
-                    game1.board[i][j] = fgetc(file);
+                        char ch = fgetc(file);
+                        game1.board[i][j] = ch;
+                    if(ch == '@'){
+                        r = i;
+                        c = j;
+                    }
+
                     //printf("%c",game1.board[i][j]);
                 }
                 fgetc(file);
             }
-            print(&game1);
-            fgetc(file);
+            printf("Move %d: \n", 0);
+            print(&game1,r,c);
+            //fgetc(file);
             fgets(command, 100, file);
+            for(i = 0; i < strlen(command); i++){
+                    if(command[i] == '>'){
+                        c++;
+                    }
+                    else if(command[i] == 'v'){
+                        r++;
+                    }
+                    else if(command[i] == '^'){
+                        r--;
+                    }
+                    else{
+                        c--;
+                    }
+                    printf("Move %d: \n", i+1);
+             print(&game1,r,c);
+            }
 
         }
         firstChar = fgetc(file);
@@ -78,15 +104,48 @@ int main( int argc, char *argv )
     game1->board = char ga
 
 */
-void print(GAME *game1)
+void print(GAME *game1,int rows, int columns)
 {
-    printf("%s", game1->title);
+    //printf("%s", game1->title);
     int r, c;
+    double distance;
     for(r = 0; r < game1->rows; r++)
     {
-        for(c = 0; c < game1->columns; c++)
-        {
-            printf("%c", game1->board[r][c]);
+        for(c = 0; c < game1->columns; c++){
+                distance = sqrt(pow(((double)(r-rows)),2) + pow(((double)(c-columns)),2));
+            if((distance < 1.00) && (game1->board[r][c] != '~')){
+                    game1->board[r][c] = '%';
+                printf("%c", '%');
+            }
+            else if ((distance < 2.00) && (game1->board[r][c] != '~')){
+                game1->board[r][c] = '#';
+                printf("%c", '#');
+            }
+            else if ((distance < 3.00) && (game1->board[r][c] != '~')){
+                    game1->board[r][c] = '=';
+                printf("%c", '=');
+            }
+            else if ((distance < 4.00) && (game1->board[r][c] != '~')){
+                game1->board[r][c] = '-';
+                printf("%c", '-');
+            }
+            else{
+            switch(game1->board[r][c]){
+            /*case '@':
+                printf("%c", '%');
+                break;*/
+            case '~':
+                printf("%c", '!');
+                break;
+            case ' ':
+                printf("%c", ' ');
+                break;
+            default:
+                printf("%c", ',');
+                break;
+            }
+            //printf("%c", game1->board[r][c]);
+        }
         }
         printf("\n");
     }
