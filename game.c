@@ -21,13 +21,13 @@
 int ROWS = 100;
 int COLUMNS = 100;
 int MOVES = 100;
-typedef enum state {NEVER,SOMEPOINT,WALL,LIGHTSOURCE} State;
-typedef enum border {CORNER, VERTICAL, HORIZONTAL} Border;
+typedef enum state {NEVER = ' ',SOMEPOINT = ',',WALL = '!',LIGHTSOURCE = '%'} State;
+typedef enum border {CORNER = '+', VERTICAL = '-', HORIZONTAL = '|'} Border;
 typedef enum Bool {FALSE, TRUE} BOOL;
 typedef struct game
 {
     char title[LINE_LENGTH];
-    int gameBoard[100][100];
+    int gameBoard[120][120];
     int columns;
     int rows;
 } GAME;
@@ -42,6 +42,7 @@ typedef struct game
 //-------------------------------------------------------------------------------------
 // FUNCTIONS
 //-------------------------------------------------------------------------------------
+void makeBorder(GAME *game1,int rows, int columns);
 void print(GAME *game1,int r,int c);
 int main( int argc, char *argv )
 {
@@ -50,7 +51,7 @@ int main( int argc, char *argv )
     int moves;
     char title[LINE_LENGTH];
     FILE * file;
-    file = fopen("std.txt.txt", "r" );
+    file = fopen("data.txt.txt", "r" );
     firstChar = fgetc(file);
     while(firstChar){
         if(firstChar == '*'){
@@ -62,6 +63,7 @@ int main( int argc, char *argv )
             //printf("%d %d %d",game1.rows, game1.columns, game1.moves);
             char command[100];
             //game1.gameBoard = int[game1.rows][game1.columns];
+            makeBorder(&game1,game1.rows, game1.columns);
             int r=0, c=0;
             for(i=1;i<game1.rows+1;i++){
                 for(j=1;j<game1.columns+1;j++){
@@ -114,18 +116,27 @@ int main( int argc, char *argv )
     fclose(file);
     return EXIT_SUCCESS;
 }
-/*void setBoard(GAME *game1; int rows, int columns){
-    game1->board = char ga
-
-*/
-/*void printBoard(GAME *game1, int rows, int columns){
-//char board[rows + 2][columns + 2];
+void makeBorder(GAME *game1,int rows, int columns){
 int r, c;
     for(r = 0; r < game1->rows+2; r++)
     {
         for(c = 0; c < game1->columns+2; c++){
-
-}*/
+                if (r == 0 || r == game1->rows+1){
+                    if(c ==0 || c == game1->columns+1){
+                        game1->gameBoard[r][c] = CORNER;
+                    }
+                    else{
+                        game1->gameBoard[r][c] = VERTICAL;
+                    }
+                }
+                else{
+                    if(c ==0 || c == game1->columns+1){
+                      game1->gameBoard[r][c] = HORIZONTAL;
+                    }
+                }
+        }
+    }
+}
 void print(GAME *game1,int rows, int columns)
 {
     //printf("%s", game1->title);
@@ -134,18 +145,10 @@ void print(GAME *game1,int rows, int columns)
     for(r = 0; r < game1->rows+2; r++)
     {
         for(c = 0; c < game1->columns+2; c++){
-                distance = sqrt(pow(((double)(r-rows+1)),2) + pow(((double)(c-columns+1)),2));
-                if ((r == 0 && c == 0) || (r == 0 && c == game1->columns+1) || (r == game1->rows+1 && c == 0) ||
-                (r == game1->rows+1 && c == game1->columns+1)){
-                printf("%c", '+');
+                distance = sqrt(pow(((double)(r-rows)),2) + pow(((double)(c-columns)),2));
+                if(r == 0 || r == game1->rows+1 || c == 0 || c == game1->columns+1){
+                   printf("%c", game1->gameBoard[r][c] );
                 }
-                else if(r == 0 || r == game1->rows+1){
-                  printf("%c", '-');
-                }
-                else if(c == 0 || c == game1->columns+1){
-                  printf("%c", '|');
-                }
-                //distance = sqrt(pow(((double)(r-rows)),2) + pow(((double)(c-columns)),2));
             else if((distance < 1.00) && (game1->gameBoard[r][c] != WALL)){
                     game1->gameBoard[r][c] = SOMEPOINT;
                 printf("%c", '%');
@@ -164,17 +167,14 @@ void print(GAME *game1,int rows, int columns)
             }
             else{
             switch(game1->gameBoard[r][c]){
-            /*case '@':
-                printf("%c", '%');
-                break;*/
             case WALL:
-                printf("%c", '!');
+                printf("%c", WALL);
                 break;
             case NEVER:
-                printf("%c", ' ');
+                printf("%c", NEVER);
                 break;
             default:
-                printf("%c", ',');
+                printf("%c", SOMEPOINT);
                 break;
             }
             //printf("%c", game1->board[r][c]);
