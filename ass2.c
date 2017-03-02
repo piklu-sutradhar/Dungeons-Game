@@ -130,12 +130,23 @@ void print(GAME *game1,int rows, int columns)
     //printf("%s", game1->title);
     int r, c;
     double distance;
-    for(r = 0; r < game1->rows; r++)
+    for(r = 0; r < game1->rows+2; r++)
     {
-        for(c = 0; c < game1->columns; c++){
-                distance = sqrt(pow(((double)(r-rows)),2) + pow(((double)(c-columns)),2));
-            if((distance < 1.00) && (game1->gameBoard[r][c] != WALL)){
-                    game1->gameBoard[r][c] = SOMEPOINT;
+        for(c = 0; c < game1->columns+2; c++){
+                distance = sqrt(pow(((double)(r-rows+1)),2) + pow(((double)(c-columns+1)),2));
+                if ((r == 0 && c == 0) || (r == 0 && c == game1->columns+1) || (r == game1->rows+1 && c == 0) ||
+                (r == game1->rows+1 && c == game1->columns+1)){
+                printf("%c", '+');
+                }
+                else if(r == 0 || r == game1->rows+1){
+                  printf("%c", '-');
+                }
+                else if(c == 0 || c == game1->columns+1){
+                  printf("%c", '|');
+                }
+                //distance = sqrt(pow(((double)(r-rows)),2) + pow(((double)(c-columns)),2));
+            else if((distance < 1.00) && (game1->gameBoard[r][c] != WALL)){
+                    game1->gameBoard[r-1][c] = SOMEPOINT;
                 printf("%c", '%');
             }
             else if ((distance < 2.00) && (game1->gameBoard[r][c] != WALL)){
