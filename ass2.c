@@ -21,9 +21,11 @@
 int ROWS = 100;
 int COLUMNS = 100;
 int MOVES = 100;
+typedef enum state {NEVER,SOMEPOINT,WALL,LIGHTSOURCE} State;
 typedef struct game
 {
     char title[LINE_LENGTH];
+    int gameBoard[100][100];
     char board[100][100];
     int columns;
     int rows;
@@ -58,14 +60,25 @@ int main( int argc, char *argv )
             fgetc(file);
             //printf("%d %d %d",game1.rows, game1.columns, game1.moves);
             char command[100];
+            //game1.gameBoard = int[game1.rows][game1.columns];
             int r=0, c=0;
             for(i=0;i<game1.rows;i++){
                 for(j=0;j<game1.columns;j++){
                         char ch = fgetc(file);
-                        game1.board[i][j] = ch;
+                        //game1.board[i][j] = ch;
                     if(ch == '@'){
+                            game1.gameBoard[i][j] = LIGHTSOURCE;
                         r = i;
                         c = j;
+                    }
+                    else if (ch == '~'){
+                        game1.gameBoard[i][j] = WALL;
+                    }
+                    else if (ch == ' '){
+                        game1.gameBoard[i][j] = NEVER;
+                    }
+                    else{
+                        game1.gameBoard[i][j] = SOMEPOINT;
                     }
 
                     //printf("%c",game1.board[i][j]);
@@ -104,6 +117,14 @@ int main( int argc, char *argv )
     game1->board = char ga
 
 */
+/*void printBoard(GAME *game1, int rows, int columns){
+//char board[rows + 2][columns + 2];
+int r, c;
+    for(r = 0; r < game1->rows+2; r++)
+    {
+        for(c = 0; c < game1->columns+2; c++){
+
+}*/
 void print(GAME *game1,int rows, int columns)
 {
     //printf("%s", game1->title);
@@ -113,31 +134,31 @@ void print(GAME *game1,int rows, int columns)
     {
         for(c = 0; c < game1->columns; c++){
                 distance = sqrt(pow(((double)(r-rows)),2) + pow(((double)(c-columns)),2));
-            if((distance < 1.00) && (game1->board[r][c] != '~')){
-                    game1->board[r][c] = '%';
+            if((distance < 1.00) && (game1->gameBoard[r][c] != WALL)){
+                    game1->gameBoard[r][c] = SOMEPOINT;
                 printf("%c", '%');
             }
-            else if ((distance < 2.00) && (game1->board[r][c] != '~')){
-                game1->board[r][c] = '#';
+            else if ((distance < 2.00) && (game1->gameBoard[r][c] != WALL)){
+               game1->gameBoard[r][c] = SOMEPOINT;
                 printf("%c", '#');
             }
-            else if ((distance < 3.00) && (game1->board[r][c] != '~')){
-                    game1->board[r][c] = '=';
+            else if ((distance < 3.00) && (game1->gameBoard[r][c] != WALL)){
+                 game1->gameBoard[r][c] = SOMEPOINT;
                 printf("%c", '=');
             }
-            else if ((distance < 4.00) && (game1->board[r][c] != '~')){
-                game1->board[r][c] = '-';
+            else if ((distance < 4.00) && (game1->gameBoard[r][c] != WALL)){
+                game1->gameBoard[r][c] = SOMEPOINT;
                 printf("%c", '-');
             }
             else{
-            switch(game1->board[r][c]){
+            switch(game1->gameBoard[r][c]){
             /*case '@':
                 printf("%c", '%');
                 break;*/
-            case '~':
+            case WALL:
                 printf("%c", '!');
                 break;
-            case ' ':
+            case NEVER:
                 printf("%c", ' ');
                 break;
             default:
