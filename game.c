@@ -256,7 +256,7 @@ else if (minY == maxY){
 else{
     double slope = (double)(yLight - yPosition)/(double)(xLight - xPosition);
     double intersect = yLight - (slope * xLight);
-    for(x = (float)(minX + 1); x < maxX - 0.5 && result == FALSE; x = x + 0.5){
+    for(x = (float)(minX); x < maxX && result == FALSE; x = x + 0.5){
             int y = slope * x + intersect;
             int c = (int) x;
             checkPoints(game1, y, c);
@@ -278,4 +278,3 @@ int min(int x, int y){
 int max(int min, int x, int y){
 return x+y-min;
 }
-
