@@ -14,19 +14,19 @@
 #include<string.h>
 #include<math.h>
 #include<assert.h>
+#include<unistd.h>
 
-#define DNDEBUG
-#define LINE_LENGTH 50
+#define LENGTH 200
 //-------------------------------------------------------------------------------------
 // CONSTANTS and TYPES
 //-------------------------------------------------------------------------------------
-typedef enum state {NEVER = ' ',SOMEPOINT = ',',WALL = '!',LIGHTSOURCE = '%'} State;
+typedef enum state {NEVER = ' ',SOMEPOINT = ',',WALL = '!',LIGTHSOURCE = '%',INTENSITY1 = '#',INTENSITY2 = '=',INTENSITY3 = '-'} State;
 typedef enum border {CORNER = '+', VERTICAL = '-', HORIZONTAL = '|'} Border;
 typedef enum Bool {FALSE, TRUE} BOOL;
 typedef struct game
 {
-    char title[LINE_LENGTH];
-    int gameBoard[120][120];
+    char title[LENGTH];
+    int gameBoard[LENGTH][LENGTH];
     int columns;
     int rows;
 } GAME;
@@ -37,11 +37,14 @@ typedef struct game
 //-------------------------------------------------------------------------------------
 // PROTOTYPES
 //-------------------------------------------------------------------------------------
-void makeMoves(GAME * game1,int r, int c, char command[]);
+//invariants
+void checkPoints(GAME const *game1, int r, int c);
+void updateBoard(GAME *game1,int rows, int columns);
+void makeMoves(GAME * game1,int r, int c, char command[],int moves);
 int min(int x, int y);
 int max(int min, int x, int y);
 BOOL wallPresent(GAME * game1, int yPosition, int xPosition, int yLight, int xLight);
-void makeBorder(GAME *game1,int rows, int columns);
+void makeBorder(GAME *game1);
 void print(GAME *game1,int r,int c, int move);
 //-------------------------------------------------------------------------------------
 // FUNCTIONS
@@ -63,23 +66,31 @@ int main( int argc, char *argv[] )
     else{
     assert(argc == 2);
     file = fopen(argv[1],"r");
-    while(fgets(game1.title,LINE_LENGTH,file)){
+    while(fgets(game1.title,LENGTH,file)){
+    assert(game1.title != NULL);
+    assert(game1.title[0] == '*');
         if(game1.title[0] == '*'){
             int i,j;
+            
             printf("%s", game1.title);
+            #ifdef ANIMATION
+            sleep(1);
+            system("clear");
+            #endif
+            
             fscanf(file, "%d %d %d", &game1.rows, &game1.columns, &moves);
             fgetc(file);
-            fgetc(file);
-            char command[100];
-            makeBorder(&game1,game1.rows, game1.columns);
-            int r=0, c=0;
+            char command[moves+1];
+            makeBorder(&game1);
+            int r, c;
             for(i=1;i<game1.rows+1;i++){
                 for(j=1;j<game1.columns+1;j++){
                         char ch = fgetc(file);
                     if(ch == '@'){
-                            game1.gameBoard[i][j] = LIGHTSOURCE;
+                            game1.gameBoard[i][j] = LIGTHSOURCE;
                         r = i;
                         c = j;
+                        checkPoints(&game1,r,c);
                     }
                     else if (ch == '~'){
                         game1.gameBoard[i][j] = WALL;
@@ -92,45 +103,69 @@ int main( int argc, char *argv[] )
                     }
                 }
                 fgetc(file);
-                fgetc(file);
             }
             print(&game1,r,c,0);
-            fgets(command, 100, file);
-            makeMoves(&game1,r,c, command);
+            #ifdef ANIMATION
+            sleep(1);
+            system("clear");
+            #endif
+            fgets(command,moves+1, file);
+            fgetc(file);
+            assert(strlen(command) == moves);
+            makeMoves(&game1,r,c, command,moves);
         }
     }
     fclose(file);
     return EXIT_SUCCESS;
     }
 }
-void makeMoves(GAME * game1,int r, int c, char command[]){
+//Invariants
+void checkPoints(GAME const *game1, int r, int c){
+assert(r>=0 && r<game1->rows + 2 && c >=0 && c < game1->columns + 2);
+}
+void makeMoves(GAME * game1,int r, int c, char command[],int moves){
 int i;
-int moves = strlen(command);
-int start = 0;
-/*#ifdef DNDEBUG
-start = moves - 10;
-#endif
-#ifndef DNDEBUG
- start = 0;
- #endif*/
-            for(i = start; i < moves; i++){
+//dsint start = 0;
+for(i = 0; i < moves; i++){
                     if(command[i] == '>'){
                         c++;
+                        checkPoints(game1,r,c);
                     }
                     else if(command[i] == 'v'){
                         r++;
+                        checkPoints(game1,r,c);
                     }
                     else if(command[i] == '^'){
                         r--;
+                        checkPoints(game1,r,c);
                     }
                     else{
                         c--;
+                        checkPoints(game1,r,c);
                     }
-             print(game1,r,c,i+1);
+                    checkPoints(game1,r,c);
+                   updateBoard(game1, r, c);
+                   #ifdef NDEBUG
+                    if( i >= moves-10)
+                   {
+                   print(game1,r,c,i+1);
+                   #ifdef ANIMATION
+            sleep(1);
+            system("clear");
+            #endif
+                   }
+                   #endif
+                   #ifndef NDEBUG
+                   print(game1,r,c,i+1);
+                   #ifdef ANIMATION
+            sleep(1);
+            system("clear");
+            #endif
+                   #endif
+                  
             }
-	    //#endif
 }
-void makeBorder(GAME *game1,int rows, int columns){
+void makeBorder(GAME *game1){
 int r, c;
 
     for(r = 0; r < game1->rows+2; r++)
@@ -152,51 +187,58 @@ int r, c;
         }
     }
 }
-void print(GAME *game1,int rows, int columns, int move)
-{
-    printf("Move %d\n", move);
-    int r, c;
+void updateBoard(GAME *game1,int rows, int columns){
+int r, c;
     double distance;
+    checkPoints(game1, rows, columns);
     for(r = 0; r < game1->rows+2; r++)
     {
         for(c = 0; c < game1->columns+2; c++){
                 distance = sqrt(pow(((double)(r-rows)),2) + pow(((double)(c-columns)),2));
-                if(move == 0 || r == 0 || r == game1->rows+1 || c == 0 || c == game1->columns+1 || game1->gameBoard[r][c] == WALL || (wallPresent(game1,r,c,rows,columns) == TRUE)){
-                   printf("%c", game1->gameBoard[r][c] );
-                }
-            else if((distance < 1.00)){
-                    game1->gameBoard[r][c] = SOMEPOINT;
-                printf("%c", '%');
+                if(!(r == 0 || r == game1->rows+1 || c == 0 || c == game1->columns+1 || game1->gameBoard[r][c] == WALL || (wallPresent(game1,r,c,rows,columns) == TRUE))){
+            if((distance < 1.00)){
+                    game1->gameBoard[r][c] = LIGTHSOURCE;
             }
             else if (distance < 2.00){
-               game1->gameBoard[r][c] = SOMEPOINT;
-                printf("%c", '#');
+               game1->gameBoard[r][c] = INTENSITY1;
             }
             else if (distance < 3.00){
-                 game1->gameBoard[r][c] = SOMEPOINT;
-                printf("%c", '=');
+                 game1->gameBoard[r][c] = INTENSITY2;
             }
             else{
                     if(distance < 4.00){
-                game1->gameBoard[r][c] = SOMEPOINT;
-                printf("%c", '-');
+                game1->gameBoard[r][c] = INTENSITY3;
             }
-            else{
-               printf("%c", game1->gameBoard[r][c]);
+            else if (game1->gameBoard[r][c] != ' '){
+            game1->gameBoard[r][c] = SOMEPOINT;
             }
           }
         }
+        }
+        }
+}
+void print(GAME *game1,int rows, int columns, int move){
+int r, c;
+ printf("Move %d\n", move);
+    for(r = 0; r < game1->rows+2; r++)
+    {
+        for(c = 0; c < game1->columns+2; c++){
+        printf("%c",game1->gameBoard[r][c]);
+        }
         printf("\n");
-    }
+        } 
 }
 BOOL wallPresent(GAME * game1, int yPosition, int xPosition, int yLight, int xLight){
 int i;
+float x;
 BOOL result = FALSE;
 int minX, maxX, minY, maxY;
 minX = min(xPosition, xLight);
 maxX = max(minX, xPosition, xLight);
 minY = min(yPosition, yLight);
 maxY = max(minY, yPosition, yLight);
+checkPoints(game1, minY, minX);
+checkPoints(game1, maxY, maxX);
 if(minX == maxX){
     for(i = minY + 1; i < maxY && result == FALSE; i++){
         if(game1->gameBoard[i][minX] == WALL){
@@ -214,9 +256,11 @@ else if (minY == maxY){
 else{
     double slope = (double)(yLight - yPosition)/(double)(xLight - xPosition);
     double intersect = yLight - (slope * xLight);
-    for(i = minX + 1; i < maxX && result == FALSE; i++){
-            int y = slope * i + intersect;
-        if(game1->gameBoard[y][i] == WALL){
+    for(x = (float)(minX + 1); x < maxX - 0.5 && result == FALSE; x = x + 0.5){
+            int y = slope * x + intersect;
+            int c = (int) x;
+            checkPoints(game1, y, c);
+        if(game1->gameBoard[y][c] == WALL){
             result = TRUE;
             }
         }
@@ -234,3 +278,4 @@ int min(int x, int y){
 int max(int min, int x, int y){
 return x+y-min;
 }
+
