@@ -5,7 +5,7 @@
 // INSTRUCTOR: Franklin Bristow
 // ASSIGNMENT: assignment # 2, QUESTION: question # 1
 //
-// REMARKS: Game
+// REMARKS: Dungeons game
 //
 //-----------------------------------------
 #include<stdio.h>
@@ -23,6 +23,9 @@
 typedef enum state {NEVER = ' ',SOMEPOINT = ',',WALL = '!',LIGTHSOURCE = '%',INTENSITY1 = '#',INTENSITY2 = '=',INTENSITY3 = '-'} State;
 typedef enum border {CORNER = '+', VERTICAL = '-', HORIZONTAL = '|'} Border;
 typedef enum Bool {FALSE, TRUE} BOOL;
+//-------------------------------------------------------------------------------------
+// Struct
+//-------------------------------------------------------------------------------------
 typedef struct game
 {
     char title[LENGTH];
@@ -37,24 +40,27 @@ typedef struct game
 //-------------------------------------------------------------------------------------
 // PROTOTYPES
 //-------------------------------------------------------------------------------------
-//invariants
-void checkPoints(GAME const *game1, int r, int c);
 void updateBoard(GAME *game1,int rows, int columns);
 void makeMoves(GAME * game1,int r, int c, char command[],int moves);
 int min(int x, int y);
 int max(int min, int x, int y);
 BOOL wallPresent(GAME * game1, int yPosition, int xPosition, int yLight, int xLight);
 void makeBorder(GAME *game1);
-void print(GAME *game1,int r,int c, int move);
+void print(GAME *game1, int move);
+//invariants
+void checkPoints(GAME const *game1, int r, int c);
+
 //-------------------------------------------------------------------------------------
 // FUNCTIONS
 //-------------------------------------------------------------------------------------
 
+//Mian function
 int main( int argc, char *argv[] )
 {
     GAME game1;
     int moves;
     FILE * file;
+    //Prints an error message if argc is not expected and returns 
     if (argc < 2){
     printf("One Argument Expected\n");
     return EXIT_FAILURE;
@@ -64,91 +70,110 @@ int main( int argc, char *argv[] )
     return EXIT_FAILURE;
     }
     else{
+    //Check if expected command line arguments have been entered
     assert(argc == 2);
-    file = fopen(argv[1],"r");
-    while(fgets(game1.title,LENGTH,file)){
+    file = fopen(argv[1],"r"); //open the file
+    while(fgets(game1.title,LENGTH,file)){ //Reading the first line of the file
+    //Preconditions
     assert(game1.title != NULL);
     assert(game1.title[0] == '*');
         if(game1.title[0] == '*'){
             int i,j;
             
+            //Print the game title
             printf("%s", game1.title);
+            
+            //Delay to print next one if ANIMATION is defined
             #ifdef ANIMATION
             sleep(1);
             system("clear");
             #endif
             
+            //Reading # of rows columns and moves
             fscanf(file, "%d %d %d", &game1.rows, &game1.columns, &moves);
-            fgetc(file);
+            fgetc(file);// get rid of the new line character
             char command[moves+1];
+            
+            //Make the border in the board
             makeBorder(&game1);
             int r, c;
+            //Storing the matrix in game board as an interger
             for(i=1;i<game1.rows+1;i++){
                 for(j=1;j<game1.columns+1;j++){
                         char ch = fgetc(file);
-                    if(ch == '@'){
+                    if(ch == '@'){ //Store as light Source
                             game1.gameBoard[i][j] = LIGTHSOURCE;
+                            //Store the initial coordinate of the light source
                         r = i;
                         c = j;
                         checkPoints(&game1,r,c);
                     }
-                    else if (ch == '~'){
+                    else if (ch == '~'){ // Store as Wall
                         game1.gameBoard[i][j] = WALL;
                     }
-                    else if (ch == ' '){
+                    else if (ch == ' '){ //Store as this tile was never illuminated
                         game1.gameBoard[i][j] = NEVER;
                     }
-                    else{
+                    else{ //Store as it was illuminated at some points
                         game1.gameBoard[i][j] = SOMEPOINT;
-                    }
-                }
-                fgetc(file);
+                    }//end of for loop
+                } //end of for loop
+                fgetc(file); // get rid new line
             }
-            print(&game1,r,c,0);
+            //print the initial board with no moves
+            print(&game1,0);
+            //Animation part
             #ifdef ANIMATION
             sleep(1);
             system("clear");
             #endif
+            //Reading the moves in as a line
             fgets(command,moves+1, file);
             fgetc(file);
             assert(strlen(command) == moves);
+            //Making moves corresponding commands
             makeMoves(&game1,r,c, command,moves);
         }
     }
-    fclose(file);
+    fclose(file); // closing file
     return EXIT_SUCCESS;
     }
 }
-//Invariants
+//Invariants function
 void checkPoints(GAME const *game1, int r, int c){
 assert(r>=0 && r<game1->rows + 2 && c >=0 && c < game1->columns + 2);
 }
+
+//making the moves of the light source
 void makeMoves(GAME * game1,int r, int c, char command[],int moves){
 int i;
-//dsint start = 0;
 for(i = 0; i < moves; i++){
                     if(command[i] == '>'){
                         c++;
-                        checkPoints(game1,r,c);
+                        checkPoints(game1,r,c); //invariants
                     }
                     else if(command[i] == 'v'){
                         r++;
-                        checkPoints(game1,r,c);
+                        checkPoints(game1,r,c); //invariants
                     }
                     else if(command[i] == '^'){
                         r--;
-                        checkPoints(game1,r,c);
+                        checkPoints(game1,r,c); //invariants
                     }
                     else{
                         c--;
-                        checkPoints(game1,r,c);
+                        checkPoints(game1,r,c); //invariants
                     }
-                    checkPoints(game1,r,c);
-                   updateBoard(game1, r, c);
+                    checkPoints(game1,r,c); //invariants
+                    
+                    //update the position of the light source
+                   updateBoard(game1, r, c); 
+                   //Condition for how many state it should print
                    #ifdef NDEBUG
                     if( i >= moves-10)
                    {
-                   print(game1,r,c,i+1);
+                   print(game1,i+1);
+                   //Animation part
                    #ifdef ANIMATION
             sleep(1);
             system("clear");
@@ -156,7 +181,8 @@ for(i = 0; i < moves; i++){
                    }
                    #endif
                    #ifndef NDEBUG
-                   print(game1,r,c,i+1);
+                   print(game1,i+1);
+                   //Animation part
                    #ifdef ANIMATION
             sleep(1);
             system("clear");
@@ -165,6 +191,7 @@ for(i = 0; i < moves; i++){
                   
             }
 }
+//making the border
 void makeBorder(GAME *game1){
 int r, c;
 
@@ -187,10 +214,11 @@ int r, c;
         }
     }
 }
+//Upadating the board with new position of the light sourch
 void updateBoard(GAME *game1,int rows, int columns){
 int r, c;
     double distance;
-    checkPoints(game1, rows, columns);
+    checkPoints(game1, rows, columns); //precondition
     for(r = 0; r < game1->rows+2; r++)
     {
         for(c = 0; c < game1->columns+2; c++){
@@ -217,7 +245,9 @@ int r, c;
         }
         }
 }
-void print(GAME *game1,int rows, int columns, int move){
+
+//Printing the board
+void print(GAME *game1, int move){
 int r, c;
  printf("Move %d\n", move);
     for(r = 0; r < game1->rows+2; r++)
@@ -228,6 +258,8 @@ int r, c;
         printf("\n");
         } 
 }
+
+//Function to check if there is a wall in between the light source and the current position of the board
 BOOL wallPresent(GAME * game1, int yPosition, int xPosition, int yLight, int xLight){
 int i;
 float x;
@@ -237,6 +269,7 @@ minX = min(xPosition, xLight);
 maxX = max(minX, xPosition, xLight);
 minY = min(yPosition, yLight);
 maxY = max(minY, yPosition, yLight);
+//Post conditions
 checkPoints(game1, minY, minX);
 checkPoints(game1, maxY, maxX);
 if(minX == maxX){
@@ -259,6 +292,7 @@ else{
     for(x = (float)(minX); x < maxX && result == FALSE; x = x + 0.5){
             int y = slope * x + intersect;
             int c = (int) x;
+            //Post conditions
             checkPoints(game1, y, c);
         if(game1->gameBoard[y][c] == WALL){
             result = TRUE;
