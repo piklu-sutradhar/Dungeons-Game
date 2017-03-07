@@ -165,7 +165,7 @@ for(i = 0; i < moves; i++){
                         checkPoints(game1,r,c); //invariants
                     }
                     checkPoints(game1,r,c); //invariants
-                    
+                    assert(game1->gameBoard[r][c] != WALL);
                     //update the position of the light source
                    updateBoard(game1, r, c); 
                    //Condition for how many state it should print
@@ -262,7 +262,7 @@ int r, c;
 //Function to check if there is a wall in between the light source and the current position of the board
 BOOL wallPresent(GAME * game1, int yPosition, int xPosition, int yLight, int xLight){
 int i;
-float x;
+double x;
 BOOL result = FALSE;
 int minX, maxX, minY, maxY;
 minX = min(xPosition, xLight);
@@ -288,10 +288,10 @@ else if (minY == maxY){
 }
 else{
     double slope = (double)(yLight - yPosition)/(double)(xLight - xPosition);
-    double intersect = yLight - (slope * xLight);
-    for(x = (float)(minX); x < maxX && result == FALSE; x = x + 0.5){
-            int y = slope * x + intersect;
-            int c = (int) x;
+    double intercept = yPosition - (slope * xPosition);
+    for(x = (double)(minX + 1); x <= maxX && result == FALSE; x = x + 0.25){
+            int y = (int) (round (slope * x + intercept));
+            int c = (int)x;
             //Post conditions
             checkPoints(game1, y, c);
         if(game1->gameBoard[y][c] == WALL){
